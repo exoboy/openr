@@ -611,5 +611,6 @@ By explicitly stating the number "1" here we are telling OPENR to get the source
 
 &nbsp;  
 &nbsp;  
+Created by Clarence "exoboy" Bowman, cbowman@clarencebowman.com
 &nbsp;  
 END.
