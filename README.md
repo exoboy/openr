@@ -326,7 +326,7 @@ Timestamp accepts a date-time string for how you want your date string formatted
 
 &nbsp;  
 
-### Example  
+#### Example  
 ```
 "dest_timestamp" => "{{openr->timestamp::epoch}}",
 
@@ -337,7 +337,7 @@ Timestamp accepts a date-time string for how you want your date string formatted
 
 &nbsp;  
 
-### Result  
+#### Result  
 ```
 "dest_timestamp" => "1687903781.2712",
 ```  
@@ -352,14 +352,14 @@ If there is a time when you need to merge two or more numeric property values in
 
 &nbsp;  
 
-### Example  
+#### Example  
 ```
 "dest_add_numbers" => "{{openr->add::number_1,number_2}}",
 ```
 
 &nbsp;  
 
-### Result  
+#### Result  
 ```
 "dest_add_numbers" => "3", // or some other numeric value
 ```  
@@ -405,7 +405,9 @@ If you want to take a source property value that is an indexed array, and turn i
 
 Just specify a delimiter as the parameter of the implode action.  
 
-Example
+&nbsp;  
+
+#### Example
 ```
 {{openr->implode(,)::array_1}}
 ```  
@@ -419,7 +421,7 @@ Just specify a delimiter as the parameter of the explode action and your string 
 
 &nbsp;  
 
-Example
+#### Example  
 ```
 "regexp_destination" => "{{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}}",
 ```  
