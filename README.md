@@ -551,7 +551,7 @@ By explicitly stating the number "1" here we are telling OPENR to get the source
 &nbsp;  
 
 ### Single String Replacement  
-You can embed any valid action string into the string value of a destination properties. For example, if we wanted to precede our new string value with "XX" and end it with "YY". The destination property would look something like this:  
+You can embed any valid action string into the string value of a destination property. For example, if we wanted to precede our new string value with "XX" and end it with "YY". The destination property would look something like this:  
 	
 ```
 "destination_property" => "XX {{openr->get::foo}} YY",
@@ -562,7 +562,7 @@ If the source value retrieved was "Foo Bar", it would result in the following:
 ```
 "XX Foo Bar YY"
 ```  
-This is designed to help remove limitations where you might want to embed a source value in a a destination property like:
+This is designed to help remove limitations where you might want to embed a source value in a destination property like:
 ```
 "Cars in Lot: 24."
 ```  
