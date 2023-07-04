@@ -37,7 +37,7 @@ This potentially saves re-compilation time and avoids delays due to waiting for 
 &nbsp;  
 
 ## USAGE
-Below are example source and destination arrays referenced in this document. All property actions usages are described below. It is recommended that you read this document thoroughly before implementing it in your own code.  If your actions are not properly defined they can cause you application to throw an error.  
+Below are example source and destination arrays referenced in this document. All property actions usages are described below. It is recommended that you read this document thoroughly before implementing it in your own code.  If your actions are not properly defined they can cause your application to throw an error.  
 
 &nbsp;  
 
