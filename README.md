@@ -1,4 +1,4 @@
-# OPENR USAGE
+# OPENR v1.0
 An easy way to take one or more multidimensional source arrays and cross-index property values using property-value based notation.  
   
 It is assumed that you already know how to include files using the include and require PHP function. https://www.w3schools.com/php/php_includes.asp  
