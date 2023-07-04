@@ -3,6 +3,8 @@ An easy way to take one or more multidimensional source arrays and cross-index p
   
 It is assumed that you already know how to include files using the include and require PHP function. https://www.w3schools.com/php/php_includes.asp  
 
+Source code is 100% PHP.  
+
 &nbsp;  
 
 ### PURPOSE
