@@ -99,36 +99,81 @@ error_reporting(E_ALL);
 			$result = array( 
 				"action" => "",
 				"depth" => 0,
-				"params" => "",
-				"sources" => "",
+				"params" => array(),
+				"src" => array(),
+				"dest" => array(),
 				"original" => ""
 			);
 
 			return $result;
 		}
 
+		// -----------------------------------------------
 		// be sure to keep a copy of the original action
-		preg_match( "/\{{2}!{0,}(openr|OPENR)(\([0-9]\)){0,}->(.*?)*\}{2}/", $action, $matches );
-
-		$action = !empty( $matches[0] ) ? $matches[0] : "";
 		$original = $action;
 
-		// first, capture the openr parameters (if any)
-		preg_match( "/\{\{!{0,}(openr|OPENR)((\((.*?)?)\))->/", $action, $matches );
+		preg_match( "/\{{2}!{0,}\bopenr\b(\([0-9]\)){0,}->(.*?)*\}{2}/", $action, $matches );
+		$action = !empty( $matches[0] ) ? $matches[0] : "";
 
-		// this will always be the depth that we want to execute this action at
+		// -----------------------------------------------
+		// see if they passed an optional __dest in the parameters
+		$temp = preg_replace( "/(\,{0,1}\s{0,1}`{0,1}\b__dest\b\`{0,1})/", "", $action );
+
+		if( $temp != $action ) {
+			// we found an optional __dest which tells us to pull our source value from the destination array
+			$destination = "__dest";
+		} else {
+			$destination = "__sources";
+		}
+
+		$action = $temp;
+
+		// -----------------------------------------------
+		// capture the remaining openr parameters (if any)
+		preg_match( "/\{\{!{0,}\bopenr\b((\((.*?)?)\))->/", $action, $matches );
+
+		// -----------------------------------------------
+		// DEPTH: this will always be the depth that we want to execute this action at (default is 0)
 		$depth = !empty( $matches[ count( $matches ) - 1 ] ) ? $matches[ count( $matches ) - 1 ] : 0;
 
 		// now remove the depth from the action string
-		$action = preg_replace( "/\{\{!{0,}(openr|OPENR)[\(0-9\)]*->/", "", $action );
+		$action = preg_replace( "/\{\{!{0,}\bopenr\b[\(0-9\)]*->/", "", $action );
 
-		// check for verb parameters before the ::
+		// -----------------------------------------------
+		// VERB PARAMETERS: check for verb parameters before the ::
 		preg_match( "/\((.*?)?\)::/", $action, $matches );
 
-		if( !empty( $matches[ count( $matches ) -1 ] ) ) {
-			$params = $matches[ count( $matches ) -1 ];
+		if( count( $matches ) > 0 ) {
+			// optional parameters found
+
+			// split it into a single string of optional parameters
+			$count = !empty( count( $matches ) -1 ) ? count( $matches ) -1 : 0;
+
+			if( $count < 0 && count( $matches ) <= 0 ) {
+				$params = array();
+			} else {
+				preg_match_all( "/`(.*?)*`/", $matches[ $count ], $params );
+			}
+
+			// trim all "`" opening and closing characters
+			if( count( $params ) >= 1 ) {
+
+				$params = $params[0];
+
+				foreach( $params as $index => &$param ) {
+
+					$param = trim( $param, "`" );
+				}
+
+			} else {
+				// no optional parameters found
+				$params = array();
+			}
+
 		} else {
-			$params = "";
+
+			// no optional parameters found
+			$params = array();
 		}
 
 		// then remove the params from our action string and replace with ::
@@ -137,14 +182,14 @@ error_reporting(E_ALL);
 		// remove closing braces
 		$action = preg_replace( "/\}{2}$/", "", $action );
 
-		// now, split into command/params @ ::
+		// now, separate the action head from the body at "::"
 		$parts = explode( "::", $action );
 
 		if( empty( $parts[0] ) ) {
 			$parts[0] = "";
 		}
 
-		// make sure our action verbs are NOT case-sensitive!
+		// make sure our action verbs are lowercase!
 		$action = strtolower( $parts[0] );
 		$action = trim($action);
 
@@ -155,18 +200,26 @@ error_reporting(E_ALL);
 
 		$sources = explode( ",", $parts[1] );
 
-		// trime off any beginning or trailing whitespace
+		// trim off any beginning or trailing whitespace
 		foreach( $sources as $index => &$source ) {
 			$source = trim( $source );
 		}
 
+		if( $destination == "__dest" ) {
+			// make our source and destination the same array for this action
+			$dest = "__dest";
+		} else {
+			$dest = "__sources";
+		}
+
 		// combine into an action object
 		$result = array( 
-			"action" => $action,
-			"depth" => $depth,
-			"params" => $params,
-			"sources" => $sources,
-			"original" => $original
+			'action' => $action,
+			'depth' => $depth,
+			'params' => $params,
+			'src' => $sources,
+			'dest' => $destination,
+			'original' => $original
 		);
 
 		return $result;
@@ -242,7 +295,7 @@ error_reporting(E_ALL);
 			$action = self::parse_action( $dest_val );
 
 			if( !empty( $action['action'] ) && $action['action'] == "template" ) {
-				array_push( $template_props, $action['sources']['0'] );
+				array_push( $template_props, $action['src'][0] );
 			}
 
 		});
@@ -253,13 +306,27 @@ error_reporting(E_ALL);
 
 			$action = self::parse_action( $dest_val );
 
-			if( !empty( $action['action'] ) && $action['action'] == "template" && $action['params'] == "child" ) {
-				
-				// store our processed template copies here
-				$template = self::get_property( $dest, $action['sources'][0] );
+			if( !empty( $action['action'] ) && $action['action'] == "template" && in_array( "child", $action['params'] ) !== false ) {
 
-				// set our destination property value to our new template copy
-				$dest_val = self::set_property( $dest, $action['sources'][0], $template );
+				// store our processed template copies here
+				$template = self::get_property( $dest, $action['src'][0] );
+				$dest_val = self::set_property( $dest, $action['src'][0], $template );
+			}
+
+			if( is_array( $dest_val ) ) {
+
+				// recursively walk through our template to assign an index value to any properties that need it
+				array_walk_recursive( $dest_val, function( &$temp_val, $temp_key ) use ( $sources, $dest ) {
+
+					$action = self::parse_action( $temp_val );
+
+					if( !empty( $action['action'] ) && $action['action'] == "template" && in_array( "child", $action['params'] ) !== false ) {
+
+						// store our processed template copies here
+						$template = self::get_property( $dest, $action['src'][0] );
+						$temp_val = self::set_property( $dest, $action['src'][0], $template );
+					}
+				});
 			}
 		});
 
@@ -277,8 +344,8 @@ error_reporting(E_ALL);
 				if( !empty( $action['action'] ) && $action['action'] == "template" ) {
 					
 					// set our destination property value to our new template copy
-					$data = self::get_property( $sources, $action['sources'][1] );
-					$template_original = self::get_property( $dest, $action['sources'][0] );
+					$template_original = self::get_property( $dest, $action['src'][0] );
+					$data = self::get_property( $sources, $action['src'][1] );
 
 					// store our processed template copies here
 					$blanks = array();
@@ -302,7 +369,8 @@ error_reporting(E_ALL);
 						array_push( $blanks, $template );
 					}
 
-					$dest_val = self::set_property( $dest, $action['sources'][0], $blanks );
+					$dest_val = self::set_property( $dest, $action['src'][0], $blanks );
+
 				}
 
 			});
@@ -351,7 +419,7 @@ error_reporting(E_ALL);
 					if( $depth > $this_depth || $depth == 0 ) {
 
 						// remove the depth from our action
-						$raw_action = preg_replace( "/(openr|OPENR)(\([0-9]\)){0,}/", "openr", $val );
+						$raw_action = preg_replace( "/\bopenr\b(\([0-9]\)){0,}/", "openr", $val );
 
 						// now, parse our action string into its components
 						$action = self::parse_action( $raw_action, $depth );
@@ -396,30 +464,32 @@ error_reporting(E_ALL);
 	 * REMEMBER: any "openr->" that is preceeded by a "!" will be ignore so we can process it as a template without resorting to checking for special cases or having hard-wired property names to indicate templates. Use should be able to name templates anything they want.
 	 * */
 	static function run_action( $action, $sources, $dest, $depth = 0 ) {
-	
-		// see if we are drawing from the source or destination arrays
-		if( $action['params'] == "__dest" ) {
-			$this_source = $dest;
+
+		// see which array to use as out destination for this action
+		if( $action['dest'] == "__dest" ) {
+			$this_src = $dest;
 		} else {
-			$this_source = $sources;
+			$this_src = $sources;
 		}
 
 		switch (true) {
-// exoboy
+
 			case $action['action'] == "regexp":
 
 				// use a regular expresion on a property
 
 				// remove the opening and closing "/" so we can make sure it is there and there are no more than one of them
-				$regexp = trim( $action['params'], "/" );
-				$regexp = "/" . $regexp . "/";
+				foreach( $action['params'] as &$param ) {
+					$regexp = trim( $param, "/" );
+					$regexp = "/" . $regexp . "/";
+				}
 
 				// use the reggexp on this source property value - we can nly have one source
-				$source_prop = array_shift( $action['sources'] );
-				$subject = self::get_property( $this_source, $source_prop );
+				$source_prop = array_shift( $action['src'] );
+				$subject = self::get_property( $this_src, $source_prop );
 
 				// remove the tick marks from our replacement string - the replacement is ALWAYS at the end of the list of of sources
-				$replacement = array_pop( $action['sources'] );
+				$replacement = array_pop( $action['src'] );
 				$replacement = trim( $replacement, "`" );
 
 				$val = preg_replace( $regexp, $replacement, $subject );
@@ -427,18 +497,18 @@ error_reporting(E_ALL);
 
 			case $action['action'] == "get":
 				// get a value from our source and place it in our destination
-				$val = self::get_property( $this_source, $action['sources'][0] );
+				$val = self::get_property( $this_src, $action['src'][0] );
 				break;
 
 			case $action['action'] == "timestamp":
 				// get epoch timestamp in microseconds
 				$time = round( microtime(true) );
 
-				if( empty( $action['sources'][0] ) || $action['sources'][0] == "epoch" ) {
+				if( empty( $action['src'][0] ) || $action['src'][0] == "epoch" ) {
 					$val = $time;
 				} else {
 					// allow user to pass any date string format they want
-					$val = date( $action['sources'][0], $time );
+					$val = date( $action['src'][0], $time );
 				}
 				break;
 
@@ -447,12 +517,12 @@ error_reporting(E_ALL);
 				// get multiple values and join them using a supplied delimiter
 				$val = array();
 				
-				foreach( $action['sources'] as $index => $path ) {
-					array_push( $val, self::get_property( $this_source, $path ) );
+				foreach( $action['src'] as $index => $path ) {
+					array_push( $val, self::get_property( $this_src, $path ) );
 				}
 
 				// when all done, join together!
-				$val = implode( $action['params'], $val );
+				$val = implode( $action['params'][0], $val );
 				break;
 
 			case $action['action'] == "add":
@@ -460,9 +530,9 @@ error_reporting(E_ALL);
 				// get multiple values and mathematically ADD them together
 				$val = array();
 				
-				foreach( $action['sources'] as $index => $path ) {
+				foreach( $action['src'] as $index => $path ) {
 
-					$num = self::get_property( $this_source, $path );
+					$num = self::get_property( $this_src, $path );
 
 					if( is_array( $num ) ) {
 
@@ -490,11 +560,11 @@ error_reporting(E_ALL);
 				$val = array();
 				
 				// shift our first element, this is the number to subtract the array from
-				$total = array_shift( $action['sources'] );
+				$total = array_shift( $action['src'] );
 
-				foreach( $action['sources'] as $index => $path ) {
+				foreach( $action['src'] as $index => $path ) {
 
-					$num = self::get_property( $this_source, $path );
+					$num = self::get_property( $this_src, $path );
 
 					if( is_array( $num ) ) {
 
@@ -519,17 +589,16 @@ error_reporting(E_ALL);
 			case $action['action'] == "explode":
 
 				// user wants to create an indexed array of elements from a string
-				$str = self::get_property( $this_source, $action['sources'][0] );
+				$str = self::get_property( $this_src, $action['src'][0] );
 
-				$val = explode( $action['params'], $str );
+				$val = explode( $action['params'][0], $str );
 				break;
 
 			case $action['action'] == "implode":
 
 				// user wants to create a string from an indexed array
-				$str = self::get_property( $this_source, $action['sources'][0] );
-
-				$val = implode( $action['params'], $str );
+				$str = self::get_property( $this_src, $action['src'][0] );
+				$val = implode( $action['params'][0], $str );
 				break;
 
 			default:
@@ -579,11 +648,11 @@ error_reporting(E_ALL);
 				return false;
 				break;
 
-			case preg_match( "/\{{2}!{0,}(openr|OPENR)(\([0-9]\))?->template/", $action ) !== 0 && preg_match( "/\}{2}$/", $action ) !== 0:
+			case preg_match( "/\{{2}!{0,}\bopenr\b(\([0-9]\))?->template/", $action ) !== 0 && preg_match( "/\}{2}$/", $action ) !== 0:
 				// this is a template action!
 				return "template";
 				
-			case preg_match( "/\{{2}!{0}(openr|OPENR)(\([0-9]\)){0,}->(.*?)*(.*)*\}{2}/", $action ) !== 0:
+			case preg_match( "/\{{2}!{0}\bopenr\b(\([0-9]\)){0,}->(.*?)*(.*)*\}{2}/", $action ) !== 0:
 				
 				// this is a general action
 				return "action";
@@ -689,6 +758,10 @@ $sources = array(
 			"more" => "SUV-more1",
 			"less" => "SUV-less1"
 		),
+		array(
+			"more" => "SUV-more2",
+			"less" => "SUV-less2"
+		)
 	),
 	"array_1" => array( 1,2,3,4,5,6,7,8,9 ),
 	"array_2" => "1:2:3:4:5:6:7:8:9"
@@ -703,58 +776,58 @@ $sources['source_2'] = array(
 // EXAMPLE DESTINATION ARRAY(S)
 $dest = array(
 	"dest_foo_test" => "{{openr->get(__dest)::dest_foo}}",
-	'dest_foo' => '{{openr->get::foo}}',
+	'dest_foo' => '{{openr->get()::foo}}',
 	'dest_bar' => array(
-		'dest_baz' => '{{openr->get::bar.baz}}',
+		'dest_baz' => '{{openr->get()::bar.baz}}',
 		'dest_qux1' => array(
-			'dest_nestedKey' => '{{openr->get(__dest)::dest_foo}}'
+			'dest_nestedKey' => '{{openr->get(`__dest`)::dest_foo}}'
 			),
 			'dest_qux2' => array(
-				'dest_nestedKey' => '{{openr->get::bar.qux2.nestedKey}}'
+				'dest_nestedKey' => '{{openr->get()::bar.qux2.nestedKey}}'
 			)
 		),
 	'dest_bing' => array(
-			'dest_nestedKey' => '{{OPENR->get::bing.nestedKey}}'
+			'dest_nestedKey' => '{{openr->get()::bing.nestedKey}}'
 		),
 	"dest_empty" => "",
-	"dest_joined" => "{{openr->join(, )::bar.qux1.nestedKey,bing.nestedKey}}",
+	"dest_joined" => "{{openr->join(`, `)::bar.qux1.nestedKey,bing.nestedKey}}",
 	"dest_not_action" => "I'm not an action!",
-	"dest_timestamp" => "{{openr->timestamp::epoch}}",
-	"dest_add_numbers" => "{{openr->add::number_1,number_2}}",
-	"dest_subtract_numbers" => "{{openr->subtract::100, number_3, number_2, number_1}}",
+	"dest_timestamp" => "{{openr->timestamp()::epoch}}",
+	"dest_add_numbers" => "{{openr->add()::number_1,number_2}}",
+	"dest_subtract_numbers" => "{{openr->subtract()::100, number_3, number_2, number_1}}",
 
 	"child_template_1" => array(
-		"temp_more_1" => "{{!openr->get::additional.[].more}}",
-		"temp_less_1" => "{{!openr->get::additional.[].less}}",
-		"temp_embedded" => "{{!openr->template(child)::child_template_2,additional}}"
+		"temp_more_1" => "{{!openr->get()::additional.[].more}}",
+		"temp_less_1" => "{{!openr->get()::additional.[].less}}",
+		"temp_embedded" => "{{!openr->template(`child`)::child_template_2,additional}}"
 	),
 
 	"child_template_2" => array(
-		"temp_more_2" => "{{!openr->get::additional.[].more}}",
-		"temp_less_2" => "{{!openr->get::additional.[].less}}",
+		"temp_more_2" => "{{!openr->get()::additional.[].more}}",
+		"temp_less_2" => "{{!openr->get()::additional.[].less}}",
 	),
 
 	"dest_products_template" => array(
-		"template-type" => "{{!openr->get::products.[].type}}",
-		"template-make" => "{{!openr->get::products.[].make}}",
-		"template-model" => "{{!openr->get::products.[].model}}",
-		"template-more" => "{{!openr->get::additional.[].more}}",
-		"template_nested" => "{{!openr->template(child)::child_template_1,additional}}"
+		"template-type" => "{{!openr->get()::products.[].type}}",
+		"template-make" => "{{!openr->get()::products.[].make}}",
+		"template-model" => "{{!openr->get()::products.[].model}}",
+		"template-more" => "{{!openr->get()::additional.[].more}}",
+		"template_nested" => "{{!openr->template(`child`)::child_template_1,additional}}"
 	),
 
-	"dest_products" => "{{openr->template::dest_products_template,products}}",
+	"dest_products" => "{{openr->template()::dest_products_template,products}}",
 
-	"dest_replace" => "XX {{openr->get::foo}} is also {{openr->get::bar.baz}} XX",
+	"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get::bar.baz}} XX",
 
-	"dest_array_1" => "{{openr->implode(,)::array_1}}",
-	"dest_array_2" => "{{openr->explode(:)::array_2}}",
+	"dest_array_1" => "{{openr->implode(`,`)::array_1}}",
+	"dest_array_2" => "{{openr->explode(`:`)::array_2}}",
 
-	"source_2_dest" => "{{openr->get::source_2.source_2}}",
-	"source_2_prop_dest" => "{{openr->get::source_2.source_2_prop}}",
+	"source_2_dest" => "{{openr->get()::source_2.source_2}}",
+	"source_2_prop_dest" => "{{openr->get()::source_2.source_2_prop}}",
 
-	"regexp_destination" => "{{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}}",
-	"regexp_2" => "{{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}} SO....?",
-	"regexp_3" => "I don't know about this: {{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}}"
+	"regexp_destination" => "{{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}}",
+	"regexp_2" => "{{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}} SO....?",
+	"regexp_3" => "I don't know about this: {{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}}"
 );
 
 echo "EXAMPLE CROSS-INDEX SOURCE:";//var_dump( $result );
