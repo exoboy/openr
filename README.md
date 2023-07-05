@@ -47,58 +47,62 @@ Below are example source and destination arrays referenced in this document. All
 ```
 // Merge multiple arrays into a single source array, but make sure to give it a unqiue root property name and reference that property name in the path for your destination array.
 
-	$sources = array(
-		'foo' => 'Foo Value',
-		'bar' => array(
-			'baz' => 'Baz Value',
-			'qux1' => array(
-				'nestedKey' => 'Nested Value1'
-			),
-			'qux2' => array(
-				'nestedKey' => 'Nested Value2'
-			)
-			),
-		'bing' => array(
-				'nestedKey' => 'Nested Value3'
+$sources = array(
+	'foo' => 'Foo Value',
+	'bar' => array(
+		'baz' => 'Baz Value',
+		'qux1' => array(
+			'nestedKey' => 'Nested Value1'
 		),
-		"number_1" => "1",
-		"number_2" => "2",
-		"number_3" => "3",
-		"products" => array(
-			array(
-				"type" => "SUV",
-				"make" => "Ford",
-				"model" => "Wonder Wheel"
-			),
-			array(
-				"type" => "TRUCK",
-				"make" => "Ford",
-				"model" => "F-150"
-			),
-			array(
-				"type" => "TRUCK 2",
-				"make" => "Ford 2",
-				"model" => "F-150 2"
-			)
+		'qux2' => array(
+			'nestedKey' => 'Nested Value2'
+		)
 		),
-		"additional" => array(
-			array(
-				"more" => "SUV-more0",
-				"less" => "SUV-less0"
-			),
-			array(
-				"more" => "SUV-more1",
-				"less" => "SUV-less1"
-			),
+	'bing' => array(
+			'nestedKey' => 'Nested Value3'
+	),
+	"number_1" => "1",
+	"number_2" => array( "2" ),
+	"number_3" => "3",
+	"products" => array(
+		array(
+			"type" => "SUV",
+			"make" => "Ford",
+			"model" => "Wonder Wheel"
 		),
-		"array_1" => array( 1,2,3,4,5,6,7,8,9 ),
-		"array_2" => "1:2:3:4:5:6:7:8:9"
-	);
+		array(
+			"type" => "TRUCK",
+			"make" => "Ford",
+			"model" => "F-150"
+		),
+		array(
+			"type" => "TRUCK 2",
+			"make" => "Ford 2",
+			"model" => "F-150 2"
+		)
+	),
+	"additional" => array(
+		array(
+			"more" => "SUV-more0",
+			"less" => "SUV-less0"
+		),
+		array(
+			"more" => "SUV-more1",
+			"less" => "SUV-less1"
+		),
+		array(
+			"more" => "SUV-more2",
+			"less" => "SUV-less2"
+		)
+	),
+	"array_1" => array( 1,2,3,4,5,6,7,8,9 ),
+	"array_2" => "1:2:3:4:5:6:7:8:9"
+);
 
-	$sources['source_2'] = array(
-		"source_2" => "source_2_val",
-		"source_2_prop" => "source_2_prop_val"
-	);
+$sources['source_2'] = array(
+	"source_2" => "source_2_val",
+	"source_2_prop" => "source_2_prop_val"
+);
 ```  
 &nbsp; 
 
@@ -115,61 +119,61 @@ Essentially, you are just merging arrays into a single array, however giving eac
 ```
 // Merge multiple arrays into a single destination array, but make sure to give it a unqiue root property name and reference that property name in the paths for your destination array.
 
-	$dest = array(
-		"dest_foo_test" => "{{openr->get(__dest)::dest_foo}}",
-		'dest_foo' => '{{openr->get::foo}}',
-		'dest_bar' => array(
-			'dest_baz' => '{{openr->get::bar.baz}}',
-			'dest_qux1' => array(
-				'dest_nestedKey' => '{{openr->get(__dest)::dest_foo}}'
-				),
-				'dest_qux2' => array(
-					'dest_nestedKey' => '{{openr->get::bar.qux2.nestedKey}}'
-				)
+$dest = array(
+	"dest_foo_test" => "{{openr->get(__dest)::dest_foo}}",
+	'dest_foo' => '{{openr->get()::foo}}',
+	'dest_bar' => array(
+		'dest_baz' => '{{openr->get()::bar.baz}}',
+		'dest_qux1' => array(
+			'dest_nestedKey' => '{{openr->get(`__dest`)::dest_foo}}'
 			),
-		'dest_bing' => array(
-				'dest_nestedKey' => '{{OPENR->get::bing.nestedKey}}'
-			),
-		"dest_empty" => "",
-		"dest_joined" => "{{openr->join(, )::bar.qux1.nestedKey,bing.nestedKey}}",
-		"dest_not_action" => "I'm not an action!",
-		"dest_timestamp" => "{{openr->timestamp::epoch}}",
-		"dest_add_numbers" => "{{openr->add::number_1,number_2}}",
-		"dest_subtract_numbers" => "{{openr->subtract::100, number_3, number_2, number_1}}",
-
-		"child_template_1" => array(
-			"temp_more_1" => "{{!openr->get::additional.[].more}}",
-			"temp_less_1" => "{{!openr->get::additional.[].less}}",
-			"temp_embedded" => "{{!openr->template(child)::child_template_2,additional}}"
+			'dest_qux2' => array(
+				'dest_nestedKey' => '{{openr->get()::bar.qux2.nestedKey}}'
+			)
 		),
-
-		"child_template_2" => array(
-			"temp_more_2" => "{{!openr->get::additional.[].more}}",
-			"temp_less_2" => "{{!openr->get::additional.[].less}}",
+	'dest_bing' => array(
+			'dest_nestedKey' => '{{openr->get()::bing.nestedKey}}'
 		),
+	"dest_empty" => "",
+	"dest_joined" => "{{openr->join(`, `)::bar.qux1.nestedKey,bing.nestedKey}}",
+	"dest_not_action" => "I'm not an action!",
+	"dest_timestamp" => "{{openr->timestamp()::epoch}}",
+	"dest_add_numbers" => "{{openr->add()::number_1,number_2}}",
+	"dest_subtract_numbers" => "{{openr->subtract()::100, number_3, number_2, number_1}}",
 
-		"dest_products_template" => array(
-			"template-type" => "{{!openr->get::products.[].type}}",
-			"template-make" => "{{!openr->get::products.[].make}}",
-			"template-model" => "{{!openr->get::products.[].model}}",
-			"template-more" => "{{!openr->get::additional.[].more}}",
-			"template_nested" => "{{!openr->template(child)::child_template_1,additional}}"
-		),
+	"child_template_1" => array(
+		"temp_more_1" => "{{!openr->get()::additional.[].more}}",
+		"temp_less_1" => "{{!openr->get()::additional.[].less}}",
+		"temp_embedded" => "{{!openr->template(`child`)::child_template_2,additional}}"
+	),
 
-		"dest_products" => "{{openr->template::dest_products_template,products}}",
+	"child_template_2" => array(
+		"temp_more_2" => "{{!openr->get()::additional.[].more}}",
+		"temp_less_2" => "{{!openr->get()::additional.[].less}}",
+	),
 
-		"dest_replace" => "XX {{openr->get::foo}} is also {{openr->get::bar.baz}} XX",
+	"dest_products_template" => array(
+		"template-type" => "{{!openr->get()::products.[].type}}",
+		"template-make" => "{{!openr->get()::products.[].make}}",
+		"template-model" => "{{!openr->get()::products.[].model}}",
+		"template-more" => "{{!openr->get()::additional.[].more}}",
+		"template_nested" => "{{!openr->template(`child`)::child_template_1,additional}}"
+	),
 
-		"dest_array_1" => "{{openr->implode(,)::array_1}}",
-		"dest_array_2" => "{{openr->explode(:)::array_2}}",
+	"dest_products" => "{{openr->template()::dest_products_template,products}}",
 
-		"source_2_dest" => "{{openr->get::source_2.source_2}}",
-		"source_2_prop_dest" => "{{openr->get::source_2.source_2_prop}}",
+	"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get::bar.baz}} XX",
 
-		"regexp_destination" => "{{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}}",
-		"regexp_2" => "{{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}} SO....?",
-		"regexp_3" => "I don't know about this: {{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}}"
-	);
+	"dest_array_1" => "{{openr->implode(`,`)::array_1}}",
+	"dest_array_2" => "{{openr->explode(`:`)::array_2}}",
+
+	"source_2_dest" => "{{openr->get()::source_2.source_2}}",
+	"source_2_prop_dest" => "{{openr->get()::source_2.source_2_prop}}",
+
+	"regexp_destination" => "{{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}}",
+	"regexp_2" => "{{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}} SO....?",
+	"regexp_3" => "I don't know about this: {{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}}"
+);
 ```
 &nbsp;  
 
@@ -185,7 +189,7 @@ All property actions follow a consistent format, with some optional parameters.
 
 #### Example
 ```
-	{{openr->get::foo}}
+	{{openr->get()::foo}}
 ```  
 * Action property destinations: properties that contain actions are considered the DESTINATION property.
 
@@ -193,7 +197,7 @@ All property actions follow a consistent format, with some optional parameters.
 
 * The head of an action is the first part of all actions up to, but not including the double colon "::" divider. Everything after this is source, destination, or template paths, separated by commas.  
 
-* Action heads are case-insensitive, but action paths and optional parameters are all case-sensitive.  
+* Action heads and bodies are case-sensitive.  
 
 * All actions require the "openr->" prefix to ensure OPENR knows it is a valid action string and avoids the possibility of property values being accidentally mistaken for actions.  
   
@@ -201,9 +205,11 @@ All property actions follow a consistent format, with some optional parameters.
 
 * Optional parameters can be passed to action by enclosing them in "()" parenthesis. Sending a get request with an optional parameter would look like this: {{openr->get(option)::foo}}  
 
-* Optional parameters can only be strings. Separate individual parameters with "," commas. Example: {{openr->get(option_1, option_2, option_3)::foo}}  
+* The optional parameter enclosing "()" parenthesis do not need to be used unless you want to pass parameters. However, for consistency, it is recommended that you always include them in your action head following the action verb: {{openr->get()::foo}}  
 
-* Some preset parameters can be passed as optional parameters, but they are treated as strings and cannot be assigned values. They are matched up to their hard-coded internal values in the OPENR class. One such constant is "__dest".  
+* Optional parameters can only be strings. Separate individual parameters with "," commas and enclose them with tick marks "\`". Example: {{openr->get(\`option_1\`, \`option_2\`, \`option_3\`)::foo}}  
+
+* Some preset parameters can be passed as optional parameters, but they are treated as strings and cannot be assigned values. They are matched up to their hard-coded internal values in the OPENR class. One such constant is "__dest". You can pass these with or without enclosing tick marks "\`".
 
 * Precede an action with "!" and this will prevent OPENR from executing that action. This is done to indicate to OPENR which actions are template actions, which we never want to process. The ! indicator can be used on any property. Example: "{{!openr->get(option)::foo}}" will tell OPENR to ignore this action.  
 
@@ -248,7 +254,7 @@ array(
 
 #### Example Path  
 ```
-{{openr->get::parent.child.target}}
+{{openr->get()::parent.child.target}}
 ```  
 
 You can also use the destination array as a target by using the "__dest" preset parameter like this:
@@ -280,7 +286,7 @@ In this example, we want to use the OPENR action verb "get". This will look for 
 
 #### Example  
 ```
-	'dest_foo' => '{{openr->get::root.foo}}',
+	'dest_foo' => '{{openr->get()::root.foo}}',
 ```  
 
 * "get" looks for a value to set in the current property. So, any property that contains this action will replace its action string with the value found at the location specified by the path. In essence, we are telling OPENR to go and "get" a value for the current location and use it instead if the action string.  
@@ -330,11 +336,11 @@ Timestamp accepts a date-time string for how you want your date string formatted
 
 #### Example  
 ```
-"dest_timestamp" => "{{openr->timestamp::epoch}}",
+"dest_timestamp" => "{{openr->timestamp()::epoch}}",
 
 // or
 
-"dest_timestamp" => "{{openr->timestamp::}}",	
+"dest_timestamp" => "{{openr->timestamp()::}}",	
 ```
 
 &nbsp;  
@@ -356,7 +362,7 @@ If there is a time when you need to merge two or more numeric property values in
 
 #### Example  
 ```
-"dest_add_numbers" => "{{openr->add::number_1,number_2}}",
+"dest_add_numbers" => "{{openr->add()::number_1,number_2}}",
 ```
 
 &nbsp;  
@@ -380,7 +386,7 @@ When performing the subtraction, the order of operation matters. In the two exam
 
 #### Example 1  
 ```
-	"dest_add_numbers" => "{{openr->add::number_1,number_2}}",
+	"dest_add_numbers" => "{{openr->add()::number_1,number_2}}",
 
 	// this would perform: number_1 - number_2
 	// so, if the numbers were 10 and 5, respectively, we would get: 5
@@ -390,7 +396,7 @@ When performing the subtraction, the order of operation matters. In the two exam
 
 #### Example 2  
 ```
-	"dest_add_numbers" => "{{openr->add::number_2,number_1}}",
+	"dest_add_numbers" => "{{openr->add()::number_2,number_1}}",
 
 	// if the order was reversed, this would perform: number_2 - number_1
 	// so, if the numbers were 5 and 10, respectively, we would get: -5
@@ -411,7 +417,7 @@ Just specify a delimiter as the parameter of the implode action.
 
 #### Example
 ```
-{{openr->implode(,)::array_1}}
+{{openr->implode(`,`)::array_1}}
 ```  
 
 &nbsp;  
@@ -425,7 +431,7 @@ Just specify a delimiter as the parameter of the explode action and your string 
 
 #### Example  
 ```
-"regexp_destination" => "{{openr->regexp(/[0-9]{1,}/)::products.1.model,`okay`}}",
+"regexp_destination" => "{{openr->regexp(`/[0-9]{1,}/`)::products.1.model,`okay`}}",
 ```  
 
 &nbsp;  
@@ -483,7 +489,7 @@ Templates can be nested inside of other templates by passing the "child" optiona
 		"template_nested" => "{{!openr->template(child)::child_template_1,additional}}"
 	),
 
-"dest_products" => "{{openr->template::dest_products_template,products}}",
+"dest_products" => "{{openr->template()::dest_products_template,products}}",
 ```  
 
 &nbsp;  
@@ -497,8 +503,14 @@ To specify a template to be used on the data in an indexed array, you will need 
 &nbsp;  
 #### Example
 ```
-{{openr->template::dest_products_template,products}}
+{{openr->template()::dest_products_template,products}}
 ```  
+The template to use is always the first body argument. In this example it is "dest_products_template".  
+
+The next argument is the source of the data to use to populate our template array. In this case it would be "products".  
+
+You can only have one template and data source per template. However, template actions that make up the template can draw from different sources or the destination array.  
+
 &nbsp;  
 
 ### Template Child Properties  
@@ -509,7 +521,7 @@ All child properties MUST be preceded by a "!" or else OPNR will execute them an
 Regardless of whether and action is part of a template property or not, if it starts with a "!" then OPENR knows to avoid ever executing these actions.
 
 ```
-"dest_property" => "{{openr->template::template,products}}",
+"dest_property" => "{{openr->template()::template,products}}",
 "template" => "{{!openr->get::products.1.type}}"
 ```  
 The above example, "template" holds our template's child actions. In the "dest_property" we can see the template verb, then the template to use, then the source property to draw a value from to populate the template.  
@@ -556,7 +568,7 @@ By explicitly stating the number "1" here we are telling OPENR to get the source
 You can embed any valid action string into the string value of a destination property. For example, if we wanted to precede our new string value with "XX" and end it with "YY". The destination property would look something like this:  
 	
 ```
-"destination_property" => "XX {{openr->get::foo}} YY",
+"destination_property" => "XX {{openr->get()::foo}} YY",
 ```
 
 If the source value retrieved was "Foo Bar", it would result in the following:  
@@ -570,7 +582,7 @@ This is designed to help remove limitations where you might want to embed a sour
 ```  
 Where "24" is the value pulled from the source arrays. That action string might look like this:
 ```
-"Cars in Lot: {{openr->get::cars}}.",
+"Cars in Lot: {{openr->get()::cars}}.",
 ```  
 
 &nbsp;  
@@ -578,7 +590,7 @@ Where "24" is the value pulled from the source arrays. That action string might 
 ### Multiple String Replacement  
 You can also embed multiple actions in your strings to add values from multiple properties in your source array(s).
 ```
-"dest_replace" => "XX {{openr->get::foo}} is also {{openr->get::bar.baz}} XX",
+"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get()::bar.baz}} XX",
 ```  
 Would yield:
 ```
