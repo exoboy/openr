@@ -162,7 +162,7 @@ $dest = array(
 
 	"dest_products" => "{{openr->template()::dest_products_template,products}}",
 
-	"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get::bar.baz}} XX",
+	"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get()::bar.baz}} XX",
 
 	"dest_array_1" => "{{openr->implode(`,`)::array_1}}",
 	"dest_array_2" => "{{openr->explode(`:`)::array_2}}",
@@ -203,7 +203,7 @@ All property actions follow a consistent format, with some optional parameters.
   
 * Action verbs are what you will use to specify what kind of action you want to perform. In this case our verb is "get". Every action requires a verb to properly execute.  
 
-* Optional parameters can be passed to action by enclosing them in "()" parenthesis. Sending a get request with an optional parameter would look like this: {{openr->get(option)::foo}}  
+* Optional parameters can be passed to action by enclosing them in "()" parenthesis. The parenthesis are required whether an parameter is passed or not: {{openr->get(option)::foo}}  
 
 * The optional parameter enclosing "()" parenthesis do not need to be used unless you want to pass parameters. However, for consistency, it is recommended that you always include them in your action head following the action verb: {{openr->get()::foo}}  
 
