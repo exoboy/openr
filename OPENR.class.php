@@ -110,23 +110,22 @@ error_reporting(E_ALL);
 
 		// -----------------------------------------------
 		// be sure to keep a copy of the original action
-		$original = $action;
-
 		preg_match( "/\{{2}!{0,}\bopenr\b(\([0-9]\)){0,}->(.*?)*\}{2}/", $action, $matches );
 		$action = !empty( $matches[0] ) ? $matches[0] : "";
 
+		// set this AFTER the preg_match, in case there are multiple actions in a property
+		$original = $action;
+
 		// -----------------------------------------------
 		// see if they passed an optional __dest in the parameters
-		$temp = preg_replace( "/(\,{0,1}\s{0,1}`{0,1}\b__dest\b\`{0,1})/", "", $action );
+		$temp = preg_match( "/(\((.*?)?`{0,1}\b__dest\b`{0,1}(.*?)?\))/", $action );
 
-		if( $temp != $action ) {
+		if( $temp ) {
 			// we found an optional __dest which tells us to pull our source value from the destination array
 			$destination = "__dest";
 		} else {
 			$destination = "__sources";
 		}
-
-		$action = $temp;
 
 		// -----------------------------------------------
 		// capture the remaining openr parameters (if any)
@@ -419,7 +418,7 @@ error_reporting(E_ALL);
 					if( $depth > $this_depth || $depth == 0 ) {
 
 						// remove the depth from our action
-						$raw_action = preg_replace( "/\bopenr\b(\([0-9]\)){0,}/", "openr", $val );
+						$raw_action = $val;//preg_replace( "/\bopenr\b(\([0-9]\)){0,}/", "openr", $val );
 
 						// now, parse our action string into its components
 						$action = self::parse_action( $raw_action, $depth );
@@ -429,7 +428,7 @@ error_reporting(E_ALL);
 
 						// see if we should replace our original action with the new value
 						if( is_string( $result ) ) {
-							$val = str_replace( $action['original'], $result, $val  ); 
+							$val = str_replace( $action['original'], $result, $val  );
 						} else {
 							$val = $result;
 						}
@@ -479,14 +478,13 @@ error_reporting(E_ALL);
 				// use a regular expresion on a property
 
 				// remove the opening and closing "/" so we can make sure it is there and there are no more than one of them
-				foreach( $action['params'] as &$param ) {
-					$regexp = trim( $param, "/" );
-					$regexp = "/" . $regexp . "/";
-				}
+				$regexp = trim( $action['params'][0], "/" );
+				$regexp = "/" . $regexp . "/";
 
-				// use the reggexp on this source property value - we can nly have one source
+				// use the reggexp on this source property value - we can only have one source
 				$source_prop = array_shift( $action['src'] );
 				$subject = self::get_property( $this_src, $source_prop );
+// exoboy
 
 				// remove the tick marks from our replacement string - the replacement is ALWAYS at the end of the list of of sources
 				$replacement = array_pop( $action['src'] );
@@ -817,7 +815,7 @@ $dest = array(
 
 	"dest_products" => "{{openr->template()::dest_products_template,products}}",
 
-	"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get::bar.baz}} XX",
+	"dest_replace" => "XX {{openr->get()::foo}} is also {{openr->get()::bar.baz}} XX",
 
 	"dest_array_1" => "{{openr->implode(`,`)::array_1}}",
 	"dest_array_2" => "{{openr->explode(`:`)::array_2}}",
