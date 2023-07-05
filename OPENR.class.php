@@ -484,7 +484,6 @@ error_reporting(E_ALL);
 				// use the reggexp on this source property value - we can only have one source
 				$source_prop = array_shift( $action['src'] );
 				$subject = self::get_property( $this_src, $source_prop );
-// exoboy
 
 				// remove the tick marks from our replacement string - the replacement is ALWAYS at the end of the list of of sources
 				$replacement = array_pop( $action['src'] );
